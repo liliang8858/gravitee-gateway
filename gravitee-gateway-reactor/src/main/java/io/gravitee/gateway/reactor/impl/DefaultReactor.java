@@ -90,6 +90,10 @@ public class DefaultReactor extends AbstractService implements
                     if (reactorHandler != null) {
                         reactorHandler
                                 .handler(context1 -> {
+                                    // set the username provided by the jwt policy
+                                    if (context1.getAttribute(ExecutionContext.ATTR_USER) != null && serverRequest.metrics().getUser() == null) {
+                                        serverRequest.metrics().setUser((String) context1.getAttribute(ExecutionContext.ATTR_USER));
+                                    }
                                     // Ensure that response has been ended before going further
                                     context1.response().end();
 
