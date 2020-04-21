@@ -50,10 +50,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.net.ConnectException;
-import java.net.NoRouteToHostException;
-import java.net.URI;
-import java.net.UnknownHostException;
+import java.net.*;
 import java.util.*;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
@@ -70,6 +67,7 @@ public class VertxHttpClient extends AbstractLifecycleComponent<Connector> imple
     private static final String WSS_SCHEME = "wss";
     private static final int DEFAULT_HTTP_PORT = 80;
     private static final int DEFAULT_HTTPS_PORT = 443;
+
     private static final Set<CharSequence> HOP_HEADERS;
 
     private static final Set<CharSequence> WS_HOP_HEADERS;
@@ -130,6 +128,7 @@ public class VertxHttpClient extends AbstractLifecycleComponent<Connector> imple
         }
 
         final URI uri = proxyRequest.uri();
+
         final int port = uri.getPort() != -1 ? uri.getPort() :
                 (HTTPS_SCHEME.equals(uri.getScheme()) || WSS_SCHEME.equals(uri.getScheme()) ? 443 : 80);
 
@@ -144,6 +143,9 @@ public class VertxHttpClient extends AbstractLifecycleComponent<Connector> imple
         }
 
         String relativeUri = (uri.getRawQuery() == null) ? uri.getRawPath() : uri.getRawPath() + '?' + uri.getRawQuery();
+
+        // Add the endpoint reference in metrics to know which endpoint has been invoked while serving the request
+        proxyRequest.metrics().setEndpoint(uri.toString());
 
         if (proxyRequest.isWebSocket()) {
             VertxWebSocketProxyConnection webSocketProxyConnection = new VertxWebSocketProxyConnection();
@@ -305,7 +307,7 @@ public class VertxHttpClient extends AbstractLifecycleComponent<Connector> imple
         URI target = URI.create(endpoint.getTarget());
         HttpClientSslOptions sslOptions = endpoint.getHttpClientSslOptions();
 
-        if (HTTPS_SCHEME.equalsIgnoreCase(target.getScheme())) {
+        if (HTTPS_SCHEME.equalsIgnoreCase(target.getScheme()) || WSS_SCHEME.equalsIgnoreCase(target.getScheme())) {
             // Configure SSL
             httpClientOptions.setSsl(true);
 

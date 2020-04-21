@@ -18,48 +18,30 @@ package io.gravitee.gateway.reactor.processor;
 import io.gravitee.gateway.api.ExecutionContext;
 import io.gravitee.gateway.core.processor.Processor;
 import io.gravitee.gateway.core.processor.chain.DefaultProcessorChain;
-import io.gravitee.gateway.reactor.processor.alert.AlertProcessor;
-import io.gravitee.gateway.reactor.processor.reporter.ReporterProcessor;
-import io.gravitee.gateway.reactor.processor.responsetime.ResponseTimeProcessor;
+import io.gravitee.gateway.reactor.processor.notfound.NotFoundProcessor;
+import io.gravitee.gateway.reactor.processor.notfound.NotFoundReporter;
 import io.gravitee.gateway.report.ReporterService;
-import io.gravitee.node.api.Node;
-import io.gravitee.plugin.alert.AlertEventProducer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.env.Environment;
 
 import java.util.Arrays;
 
-/**
- * @author David BRASSELY (david.brassely at graviteesource.com)
- * @author GraviteeSource Team
- */
-public class ResponseProcessorChainFactory {
+public class NotFoundProcessorChainFactory {
 
     @Autowired
     private ReporterService reporterService;
 
     @Autowired
-    private AlertEventProducer eventProducer;
+    private Environment environment;
 
-    @Autowired
-    private Node node;
+    @Value("${handlers.notfound.log.enabled:false}")
+    private boolean logEnabled;
 
-    @Value("${http.port:8082}")
-    private String port;
-
-    //TODO: apply alert processor only if one plugin is installed
-    /*
-    if (! alertEventProducer.isEmpty()) {
-            AlertProcessorSupplier supplier = new AlertProcessorSupplier();
-            applicationContext.getAutowireCapableBeanFactory().autowireBean(supplier);
-            providers.add(new ProcessorSupplier<>(() -> new StreamableProcessorDecorator<>(supplier.get())));
-        }
-     */
     public Processor<ExecutionContext> create() {
         return new DefaultProcessorChain<>(Arrays.asList(
-                new ResponseTimeProcessor(),
-                new ReporterProcessor(reporterService),
-                new AlertProcessor(eventProducer, node, port)
+                new NotFoundProcessor(environment),
+                new NotFoundReporter(reporterService, logEnabled)
         ));
     }
 }

@@ -18,8 +18,8 @@ package io.gravitee.gateway.standalone.vertx;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.HttpMethod;
 import io.gravitee.common.http.HttpVersion;
-import io.gravitee.common.util.LinkedMultiValueMap;
 import io.gravitee.common.util.MultiValueMap;
+import io.gravitee.common.util.URIUtils;
 import io.gravitee.common.utils.UUID;
 import io.gravitee.gateway.api.Request;
 import io.gravitee.gateway.api.buffer.Buffer;
@@ -37,6 +37,7 @@ import java.util.Map;
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author Guillaume GILLON (guillaume.gillon at outlook.com)
  * @author Azize ELAMRANI (azize.elamrani at graviteesource.com)
+ * @author Nicolas GERAUD (nicolas.geraud at graviteesource.com)
  * @author GraviteeSource Team
  */
 public class VertxHttpServerRequest implements Request {
@@ -102,12 +103,7 @@ public class VertxHttpServerRequest implements Request {
     @Override
     public MultiValueMap<String, String> parameters() {
         if (queryParameters == null) {
-            MultiMap parameters = httpServerRequest.params();
-            queryParameters = new LinkedMultiValueMap<>(parameters.size());
-
-            for(Map.Entry<String, String> param : httpServerRequest.params()) {
-                queryParameters.put(param.getKey(), parameters.getAll(param.getKey()));
-            }
+            queryParameters = URIUtils.parameters(httpServerRequest.uri());
         }
 
         return queryParameters;
